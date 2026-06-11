@@ -1,0 +1,10 @@
+*.exe
+*.out
+*.o
+encrypt_program
+*.obj
+.vscode/
+.idea/
+*~
+*.swp
+*.swo
