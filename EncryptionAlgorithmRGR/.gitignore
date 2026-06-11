@@ -1,0 +1,11 @@
+*.o
+*.so
+*.dll
+*.exe
+bin/
+build/
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
