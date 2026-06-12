@@ -6,8 +6,8 @@ TARGET = encrypt_program
 SOURCES = menu.cpp alphabet.cpp vigenere.cpp hill.cpp
 
 # Проверка наличия дополнительных модулей
-ifneq (,$(wildcard Xor.cpp))
-    SOURCES += Xor.cpp
+ifneq (,$(wildcard xor.cpp))
+    SOURCES += xor.cpp
     CXXFLAGS += -DXOR_AVAILABLE
 endif
 
