@@ -1,6 +1,5 @@
 #include "library_loader.h"
 #include <stdexcept>
-#include <vector>
 
 #ifdef _WIN32
     #include <windows.h>
@@ -17,7 +16,6 @@
 #endif
 
 std::vector<std::string> get_available_algorithms() {
-    // Зашитый список поддерживаемых алгоритмов
     return {
         "vigenere",
         "hill",
@@ -32,7 +30,6 @@ loaded_library_t load_library(const std::string& algorithm_name) {
     loaded_library_t lib;
     lib.name = algorithm_name;
     
-    // Формируем имя файла библиотеки
     std::string lib_filename;
 #ifdef _WIN32
     lib_filename = algorithm_name + DL_EXT;
@@ -40,13 +37,11 @@ loaded_library_t load_library(const std::string& algorithm_name) {
     lib_filename = "lib" + algorithm_name + DL_EXT;
 #endif
     
-    // Загружаем библиотеку
     lib.handle = DL_OPEN(lib_filename.c_str());
     if (!lib.handle) {
         throw std::runtime_error("Не удалось загрузить библиотеку: " + lib_filename);
     }
     
-    // Загружаем функции
     lib.get_info = reinterpret_cast<const algorithm_info_t*(*)()>(
         DL_SYM(lib.handle, "get_algorithm_info"));
     lib.get_out_size = reinterpret_cast<size_t(*)(size_t, int)>(
@@ -63,7 +58,6 @@ loaded_library_t load_library(const std::string& algorithm_name) {
         throw std::runtime_error("Библиотека не экспортирует все необходимые функции");
     }
     
-    // Кэшируем информацию
     const algorithm_info_t* info = lib.get_info();
     if (info) {
         lib.info = *info;

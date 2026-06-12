@@ -2,7 +2,7 @@
 #include "core/library_loader.h"
 #include "core/key_generator.h"
 #include "io/file_io.h"
-#include "io/secure_memory.h"       // ← ДОБАВИТЬ
+#include "io/secure_memory.h"
 #include <iostream>
 #include <vector>
 #include <cstring>
