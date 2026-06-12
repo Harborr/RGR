@@ -1,4 +1,3 @@
-# Главный исполняемый файл
 add_executable(cryptum
     main.cpp
     cli/args_parser.cpp
@@ -10,10 +9,8 @@ add_executable(cryptum
 
 target_include_directories(cryptum PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-# Линковка с dl (для Linux)
 if(UNIX)
     target_link_libraries(cryptum PRIVATE dl)
 endif()
 
-# Установка
 install(TARGETS cryptum RUNTIME DESTINATION bin)
