@@ -1,70 +1,61 @@
-#include "Transp.h"
-#include <algorithm>
-#include <numeric>
-#include <random>
+#include "ecc.h"
+#include "alphabet.h"
+#include <vector>
+#include <string>
 
-string TranspCiph::name() const { return "Transp"; }
-
-vector<int> TranspCiph::getOrd(const string& key) {
-    vector<int> ord(key.size());
-    iota(ord.begin(), ord.end(), 0);
-    sort(ord.begin(), ord.end(), [&key](int a, int b) { return key[a] < key[b]; });
-    return ord;
-}
-
-string TranspCiph::proc(const string& txt, const string& key, bool dir) {
-    if (txt.empty() || key.empty()) return txt;
-    size_t sz = key.size();
-    size_t blk = (txt.size() + sz - 1) / sz;
-    string out;
-    out.reserve(txt.size());
-    vector<int> ord = getOrd(key);
-    if (dir) {
-        vector<int> inv(ord.size());
-        for (size_t i = 0; i < ord.size(); i++) inv[ord[i]] = i;
-        ord = inv;
-    }
-    for (size_t b = 0; b < blk; b++) {
-        string blkTxt(sz, '\0');
-        for (size_t i = 0; i < sz; i++) {
-            size_t pos = b * sz + i;
-            if (pos < txt.size()) blkTxt[i] = txt[pos];
+std::string eccEncrypt(const std::string& text, const std::string& key) {
+    if (key.empty()) return text;
+    
+    std::vector<std::string> textChars = utf8Split(text);
+    std::vector<std::string> keyChars = utf8Split(key);
+    std::string result;
+    
+    for (size_t i = 0; i < textChars.size(); ++i) {
+        int charIndex = getIndex(textChars[i]);
+        if (charIndex >= 0) {
+            int keyIndex = getIndex(keyChars[i % keyChars.size()]);
+            if (keyIndex < 0) keyIndex = 0;
+            
+            // ECC: (символ + квадрат ключа) mod размер алфавита
+            int newIndex = (charIndex + (keyIndex * keyIndex)) % ALPHABET_SIZE;
+            
+            std::string encryptedChar = ALPHABET[newIndex];
+            if (isLower(textChars[i])) {
+                encryptedChar = toLower(encryptedChar);
+            }
+            result += encryptedChar;
+        } else {
+            result += textChars[i];
         }
-        string prm(sz, '\0');
-        for (size_t i = 0; i < sz; i++) prm[ord[i]] = blkTxt[i];
-        out += prm;
     }
-    out.resize(txt.size());
-    return out;
+    return result;
 }
 
-string TranspCiph::encode(const string& txt, const string& key) { return proc(txt, key, true); }
-string TranspCiph::decode(const string& txt, const string& key) { return proc(txt, key, false); }
-
-vector<uint8_t> TranspCiph::encodeBin(const vector<uint8_t>& data, const string& key) {
-    string s(data.begin(), data.end());
-    string r = encode(s, key);
-    return vector<uint8_t>(r.begin(), r.end());
+std::string eccDecrypt(const std::string& text, const std::string& key) {
+    if (key.empty()) return text;
+    
+    std::vector<std::string> textChars = utf8Split(text);
+    std::vector<std::string> keyChars = utf8Split(key);
+    std::string result;
+    
+    for (size_t i = 0; i < textChars.size(); ++i) {
+        int charIndex = getIndex(textChars[i]);
+        if (charIndex >= 0) {
+            int keyIndex = getIndex(keyChars[i % keyChars.size()]);
+            if (keyIndex < 0) keyIndex = 0;
+            
+            // Обратное преобразование: (символ - квадрат ключа) mod размер
+            int newIndex = (charIndex - (keyIndex * keyIndex)) % ALPHABET_SIZE;
+            if (newIndex < 0) newIndex += ALPHABET_SIZE;
+            
+            std::string decryptedChar = ALPHABET[newIndex];
+            if (isLower(textChars[i])) {
+                decryptedChar = toLower(decryptedChar);
+            }
+            result += decryptedChar;
+        } else {
+            result += textChars[i];
+        }
+    }
+    return result;
 }
-
-vector<uint8_t> TranspCiph::decodeBin(const vector<uint8_t>& data, const string& key) {
-    string s(data.begin(), data.end());
-    string r = decode(s, key);
-    return vector<uint8_t>(r.begin(), r.end());
-}
-
-bool TranspCiph::keyOk(const string& key) const { return key.size() >= 2; }
-
-string TranspCiph::genKey() const {
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_int_distribution<> ldis(4, 10);
-    int len = ldis(gen);
-    uniform_int_distribution<> cdis('A', 'Z');
-    string k;
-    for (int i = 0; i < len; i++) k += (char)cdis(gen);
-    return k;
-}
-
-extern "C" ICipher* createCipher() { return new TranspCiph(); }
-extern "C" void destroyCipher(ICipher* c) { delete c; }
