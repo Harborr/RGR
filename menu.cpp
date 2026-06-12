@@ -23,12 +23,12 @@
 
 // ====== ДОПОЛНИТЕЛЬНЫЕ МОДУЛИ (с проверкой) ======
 #ifdef XOR_AVAILABLE
-    #include "Xor.h"
+    #include "xor.h"
 #else
     // Заглушки
     #include <string>
-    inline std::string XorEncrypt(const std::string&, const std::string&) { return ""; }
-    inline std::string XorDecrypt(const std::string&, const std::string&) { return ""; }
+    inline std::string xorEncrypt(const std::string&, const std::string&) { return ""; }
+    inline std::string xorDecrypt(const std::string&, const std::string&) { return ""; }
 #endif
 
 #ifdef TRANSP_AVAILABLE
@@ -94,8 +94,8 @@ void registerModules() {
     modules.push_back({
         "XOR ШИФР",
         "Ключ: ",
-        XorEncrypt,
-        XorDecrypt,
+        xorEncrypt,
+        xorDecrypt,
         true
     });
 #else
