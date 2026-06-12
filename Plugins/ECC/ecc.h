@@ -3,12 +3,11 @@
 
 #include <string>
 
-// Старые функции – для общей программы (регистр не сохраняется)
+// Обычные функции (без сохранения регистра) — для общей программы
 std::string eccEncrypt(const std::string& text, const std::string& key);
 std::string eccDecrypt(const std::string& text, const std::string& key);
 
-// Новые функции – для отдельной программы с сохранением регистра
-// mask – выходная/входная строка из символов '0' (верхний регистр) и '1' (нижний регистр)
+// Функции с маской (сохраняют регистр) — для отдельной программы
 std::string eccEncryptWithMask(const std::string& text, const std::string& key, std::string& mask);
 std::string eccDecryptWithMask(const std::string& text, const std::string& key, const std::string& mask);
 
