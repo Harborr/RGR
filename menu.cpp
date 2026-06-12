@@ -32,7 +32,7 @@
 #endif
 
 #ifdef TRANSP_AVAILABLE
-    #include "transp.h"
+    #include "transpencrypt.h"
 #else
     #include <string>
     inline std::string transpEncrypt(const std::string&, const std::string&) { return ""; }

@@ -11,8 +11,8 @@ ifneq (,$(wildcard xorencrypt.cpp))
     CXXFLAGS += -DXOR_AVAILABLE
 endif
 
-ifneq (,$(wildcard transp.cpp))
-    SOURCES += transp.cpp
+ifneq (,$(wildcard transpencrypt.cpp))
+    SOURCES += transpencrypt.cpp
     CXXFLAGS += -DTRANSP_AVAILABLE
 endif
 
@@ -46,8 +46,8 @@ ifneq (,$(wildcard xorencrypt.cpp))
 xorencrypt.o: xorencrypt.cpp xorencrypt.h alphabet.h
 endif
 
-ifneq (,$(wildcard transp.cpp))
-transp.o: transp.cpp transp.h alphabet.h
+ifneq (,$(wildcard transpencrypt.cpp))
+transpencrypt.o: transpencrypt.cpp transpencrypt.h alphabet.h
 endif
 
 ifneq (,$(wildcard rabin.cpp))
