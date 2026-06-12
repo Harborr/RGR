@@ -16,7 +16,7 @@ std::string eccEncrypt(const std::string& text, const std::string& key) {
             int keyIndex = getIndex(keyChars[i % keyChars.size()]);
             if (keyIndex < 0) keyIndex = 0;
             
-            // ECC: (символ + квадрат ключа) mod размер алфавита
+            // ECC: символ + квадрат ключа
             int newIndex = (charIndex + (keyIndex * keyIndex)) % ALPHABET_SIZE;
             
             std::string encryptedChar = ALPHABET[newIndex];
@@ -44,7 +44,6 @@ std::string eccDecrypt(const std::string& text, const std::string& key) {
             int keyIndex = getIndex(keyChars[i % keyChars.size()]);
             if (keyIndex < 0) keyIndex = 0;
             
-            // Обратное преобразование: (символ - квадрат ключа) mod размер
             int newIndex = (charIndex - (keyIndex * keyIndex)) % ALPHABET_SIZE;
             if (newIndex < 0) newIndex += ALPHABET_SIZE;
             

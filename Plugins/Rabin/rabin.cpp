@@ -16,7 +16,6 @@ std::string rabinEncrypt(const std::string& text, const std::string& key) {
             int keyIndex = getIndex(keyChars[i % keyChars.size()]);
             if (keyIndex < 0) keyIndex = 0;
             
-            // Rabin: (символ² + ключ) mod размер алфавита
             int newIndex = (charIndex * charIndex + keyIndex) % ALPHABET_SIZE;
             
             std::string encryptedChar = ALPHABET[newIndex];
@@ -44,7 +43,6 @@ std::string rabinDecrypt(const std::string& text, const std::string& key) {
             int keyIndex = getIndex(keyChars[i % keyChars.size()]);
             if (keyIndex < 0) keyIndex = 0;
             
-            // Поиск x: (x² + keyIndex) % ALPHABET_SIZE == charIndex
             int newIndex = -1;
             for (int x = 0; x < ALPHABET_SIZE; ++x) {
                 if ((x * x + keyIndex) % ALPHABET_SIZE == charIndex) {
@@ -52,7 +50,7 @@ std::string rabinDecrypt(const std::string& text, const std::string& key) {
                     break;
                 }
             }
-            if (newIndex < 0) newIndex = charIndex; // fallback
+            if (newIndex < 0) newIndex = charIndex;
             
             std::string decryptedChar = ALPHABET[newIndex];
             if (isLower(textChars[i])) {
