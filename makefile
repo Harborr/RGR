@@ -6,8 +6,8 @@ TARGET = encrypt_program
 SOURCES = menu.cpp alphabet.cpp vigenere.cpp hill.cpp
 
 # Проверка наличия дополнительных модулей
-ifneq (,$(wildcard xor.cpp))
-    SOURCES += xor.cpp
+ifneq (,$(wildcard xorencrypt.cpp))
+    SOURCES += xorencrypt.cpp
     CXXFLAGS += -DXOR_AVAILABLE
 endif
 
@@ -41,6 +41,22 @@ menu.o: menu.cpp alphabet.h vigenere.h hill.h
 alphabet.o: alphabet.cpp alphabet.h
 vigenere.o: vigenere.cpp vigenere.h alphabet.h
 hill.o: hill.cpp hill.h alphabet.h
+
+ifneq (,$(wildcard xorencrypt.cpp))
+xorencrypt.o: xorencrypt.cpp xorencrypt.h alphabet.h
+endif
+
+ifneq (,$(wildcard transp.cpp))
+transp.o: transp.cpp transp.h alphabet.h
+endif
+
+ifneq (,$(wildcard rabin.cpp))
+rabin.o: rabin.cpp rabin.h alphabet.h
+endif
+
+ifneq (,$(wildcard ecc.cpp))
+ecc.o: ecc.cpp ecc.h alphabet.h
+endif
 
 clean:
 	rm -f $(OBJECTS) $(TARGET)

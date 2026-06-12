@@ -1,6 +1,7 @@
 /*
  * Главная программа-меню для шифрования/дешифрования
  * С динамическим определением доступных модулей
+ * Версия для C++11 (совместимость со старыми компиляторами)
  */
 
 #include <iostream>
@@ -23,9 +24,8 @@
 
 // ====== ДОПОЛНИТЕЛЬНЫЕ МОДУЛИ (с проверкой) ======
 #ifdef XOR_AVAILABLE
-    #include "xor.h"
+    #include "xorencrypt.h"
 #else
-    // Заглушки
     #include <string>
     inline std::string xorEncrypt(const std::string&, const std::string&) { return ""; }
     inline std::string xorDecrypt(const std::string&, const std::string&) { return ""; }
@@ -59,11 +59,16 @@ using namespace std;
 
 // ====== СТРУКТУРА ДЛЯ ХРАНЕНИЯ ИНФОРМАЦИИ О МОДУЛЕ ======
 struct CipherModule {
-    string name;           // Название для меню
-    string keyPrompt;      // Подсказка для ввода ключа
-    string (*encrypt)(const string&, const string&);  // Указатель на функцию шифрования
-    string (*decrypt)(const string&, const string&);  // Указатель на функцию дешифрования
-    bool available;        // Доступен ли модуль
+    string name;
+    string keyPrompt;
+    string (*encrypt)(const string&, const string&);
+    string (*decrypt)(const string&, const string&);
+    bool available;
+    
+    // Конструктор для совместимости со старыми компиляторами
+    CipherModule(string n, string k, string (*e)(const string&, const string&), 
+                 string (*d)(const string&, const string&), bool a)
+        : name(n), keyPrompt(k), encrypt(e), decrypt(d), available(a) {}
 };
 
 // ====== СПИСОК ВСЕХ МОДУЛЕЙ ======
@@ -73,93 +78,93 @@ void registerModules() {
     modules.clear();
     
     // Модули, которые есть всегда
-    modules.push_back({
+    modules.push_back(CipherModule(
         "ШИФР ВИЖЕНЕРА",
         "Ключ: ",
         vigenereEncrypt,
         vigenereDecrypt,
         true
-    });
+    ));
     
-    modules.push_back({
+    modules.push_back(CipherModule(
         "HILL CIPHER",
         "Ключ-матрица: ",
         hillEncrypt,
         hillDecrypt,
         true
-    });
+    ));
     
     // Дополнительные модули
 #ifdef XOR_AVAILABLE
-    modules.push_back({
+    modules.push_back(CipherModule(
         "XOR ШИФР",
         "Ключ: ",
         xorEncrypt,
         xorDecrypt,
         true
-    });
+    ));
 #else
-    modules.push_back({
+    modules.push_back(CipherModule(
         "XOR ШИФР (НЕДОСТУПЕН)",
         "",
-        nullptr,
-        nullptr,
+        NULL,
+        NULL,
         false
-    });
+    ));
 #endif
 
 #ifdef TRANSP_AVAILABLE
-    modules.push_back({
+    modules.push_back(CipherModule(
         "ШИФР ПЕРЕСТАНОВКИ",
         "Ключ: ",
         transpEncrypt,
         transpDecrypt,
         true
-    });
+    ));
 #else
-    modules.push_back({
+    modules.push_back(CipherModule(
         "ШИФР ПЕРЕСТАНОВКИ (НЕДОСТУПЕН)",
         "",
-        nullptr,
-        nullptr,
+        NULL,
+        NULL,
         false
-    });
+    ));
 #endif
 
 #ifdef RABIN_AVAILABLE
-    modules.push_back({
+    modules.push_back(CipherModule(
         "ШИФР РАБИНА",
         "Ключ: ",
         rabinEncrypt,
         rabinDecrypt,
         true
-    });
+    ));
 #else
-    modules.push_back({
+    modules.push_back(CipherModule(
         "ШИФР РАБИНА (НЕДОСТУПЕН)",
         "",
-        nullptr,
-        nullptr,
+        NULL,
+        NULL,
         false
-    });
+    ));
 #endif
 
 #ifdef ECC_AVAILABLE
-    modules.push_back({
+    modules.push_back(CipherModule(
         "ECC (ЭЛЛИПТИЧЕСКИЕ КРИВЫЕ)",
         "Ключ: ",
         eccEncrypt,
         eccDecrypt,
         true
-    });
+    ));
 #else
-    modules.push_back({
+    modules.push_back(CipherModule(
         "ECC ЭЛЛИПТИЧЕСКИЕ КРИВЫЕ (НЕДОСТУПЕН)",
         "",
-        nullptr,
-        nullptr,
+        NULL,
+        NULL,
         false
-    });
+    ));
 #endif
 }
 
@@ -265,7 +270,7 @@ void about() {
     cout << "  - Цифры (0-9)\n";
     cout << "  - Специальные символы\n\n";
     cout << "Размер алфавита: " << ALPHABET_SIZE << " символов\n";
-    cout << "Версия: 4.0 (динамические модули)\n";
+    cout << "Версия: 4.1 (совместимость с C++11)\n";
     cout << "==================================================\n";
     cout << "\nНажмите Enter для продолжения..."; 
     cin.get();
