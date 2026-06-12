@@ -3,6 +3,11 @@
 #include <iostream>
 #include <sys/stat.h>
 
+#ifdef _WIN32
+    #include <io.h>
+    #include <fcntl.h>
+#endif
+
 std::vector<uint8_t> read_file(const std::string& filename) {
     std::ifstream file(filename, std::ios::binary | std::ios::ate);
     if (!file.is_open()) {
