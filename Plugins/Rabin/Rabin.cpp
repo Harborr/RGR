@@ -1,44 +1,67 @@
-#include "Xor.h"
-#include <random>
+#include "rabin.h"
+#include "alphabet.h"
+#include <vector>
+#include <string>
 
-string XorCiph::name() const { return "XOR"; }
-
-string XorCiph::encode(const string& txt, const string& key) {
-    string out;
-    out.reserve(txt.size());
-    for (size_t i = 0; i < txt.size(); i++)
-        out += txt[i] ^ key[i % key.size()];
-    return out;
+std::string rabinEncrypt(const std::string& text, const std::string& key) {
+    if (key.empty()) return text;
+    
+    std::vector<std::string> textChars = utf8Split(text);
+    std::vector<std::string> keyChars = utf8Split(key);
+    std::string result;
+    
+    for (size_t i = 0; i < textChars.size(); ++i) {
+        int charIndex = getIndex(textChars[i]);
+        if (charIndex >= 0) {
+            int keyIndex = getIndex(keyChars[i % keyChars.size()]);
+            if (keyIndex < 0) keyIndex = 0;
+            
+            // Rabin: (символ² + ключ) mod размер алфавита
+            int newIndex = (charIndex * charIndex + keyIndex) % ALPHABET_SIZE;
+            
+            std::string encryptedChar = ALPHABET[newIndex];
+            if (isLower(textChars[i])) {
+                encryptedChar = toLower(encryptedChar);
+            }
+            result += encryptedChar;
+        } else {
+            result += textChars[i];
+        }
+    }
+    return result;
 }
 
-string XorCiph::decode(const string& txt, const string& key) {
-    return encode(txt, key);
+std::string rabinDecrypt(const std::string& text, const std::string& key) {
+    if (key.empty()) return text;
+    
+    std::vector<std::string> textChars = utf8Split(text);
+    std::vector<std::string> keyChars = utf8Split(key);
+    std::string result;
+    
+    for (size_t i = 0; i < textChars.size(); ++i) {
+        int charIndex = getIndex(textChars[i]);
+        if (charIndex >= 0) {
+            int keyIndex = getIndex(keyChars[i % keyChars.size()]);
+            if (keyIndex < 0) keyIndex = 0;
+            
+            // Поиск x: (x² + keyIndex) % ALPHABET_SIZE == charIndex
+            int newIndex = -1;
+            for (int x = 0; x < ALPHABET_SIZE; ++x) {
+                if ((x * x + keyIndex) % ALPHABET_SIZE == charIndex) {
+                    newIndex = x;
+                    break;
+                }
+            }
+            if (newIndex < 0) newIndex = charIndex; // fallback
+            
+            std::string decryptedChar = ALPHABET[newIndex];
+            if (isLower(textChars[i])) {
+                decryptedChar = toLower(decryptedChar);
+            }
+            result += decryptedChar;
+        } else {
+            result += textChars[i];
+        }
+    }
+    return result;
 }
-
-vector<uint8_t> XorCiph::encodeBin(const vector<uint8_t>& data, const string& key) {
-    vector<uint8_t> out;
-    out.reserve(data.size());
-    for (size_t i = 0; i < data.size(); i++)
-        out.push_back(data[i] ^ (uint8_t)key[i % key.size()]);
-    return out;
-}
-
-vector<uint8_t> XorCiph::decodeBin(const vector<uint8_t>& data, const string& key) {
-    return encodeBin(data, key);
-}
-
-bool XorCiph::keyOk(const string& key) const {
-    return !key.empty();
-}
-
-string XorCiph::genKey() const {
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_int_distribution<> dis(33, 126);
-    string k;
-    for (int i = 0; i < 16; i++) k += (char)dis(gen);
-    return k;
-}
-
-extern "C" ICipher* createCipher() { return new XorCiph(); }
-extern "C" void destroyCipher(ICipher* c) { delete c; }
