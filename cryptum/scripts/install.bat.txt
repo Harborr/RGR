@@ -1,0 +1,6 @@
+@echo off
+copy cryptum.exe %SystemRoot%\System32\
+mkdir "%ProgramFiles%\Cryptum\modules"
+copy build\*.dll "%ProgramFiles%\Cryptum\modules\"
+setx PATH "%PATH%;%ProgramFiles%\Cryptum\modules"
+echo Installation complete.

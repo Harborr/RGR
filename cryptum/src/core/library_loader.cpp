@@ -1,80 +1,46 @@
 #include "library_loader.h"
-#include <stdexcept>
-#include <vector>
-
+#include <iostream>
 #ifdef _WIN32
-    #include <windows.h>
-    #define DL_OPEN(name) LoadLibraryA(name)
-    #define DL_SYM(handle, name) GetProcAddress((HMODULE)handle, name)
-    #define DL_CLOSE(handle) FreeLibrary((HMODULE)handle)
-    #define DL_EXT ".dll"
+#include <windows.h>
+#define DLOPEN LoadLibraryA
+#define DLSYM GetProcAddress
+#define DLCLOSE FreeLibrary
 #else
-    #include <dlfcn.h>
-    #define DL_OPEN(name) dlopen(name, RTLD_NOW)
-    #define DL_SYM(handle, name) dlsym(handle, name)
-    #define DL_CLOSE(handle) dlclose(handle)
-    #define DL_EXT ".so"
+#include <dlfcn.h>
+#define DLOPEN dlopen
+#define DLSYM dlsym
+#define DLCLOSE dlclose
 #endif
 
-std::vector<std::string> get_available_algorithms() {
-    // Зашитый список поддерживаемых алгоритмов
-    return {
-        "vigenere",
-        "hill",
-        "xor_cipher",
-        "transposition",
-        "ecc",
-        "rabin"
-    };
-}
-
-loaded_library_t load_library(const std::string& algorithm_name) {
-    loaded_library_t lib;
-    lib.name = algorithm_name;
-    
-    // Формируем имя файла библиотеки
-    std::string lib_filename;
+CipherPlugin load_plugin(const std::string& algorithm) {
+    CipherPlugin p = {};
+    std::string lib_name;
 #ifdef _WIN32
-    lib_filename = algorithm_name + DL_EXT;
+    lib_name = algorithm + ".dll";
 #else
-    lib_filename = "lib" + algorithm_name + DL_EXT;
+    lib_name = "lib" + algorithm + ".so";
 #endif
-    
-    // Загружаем библиотеку
-    lib.handle = DL_OPEN(lib_filename.c_str());
-    if (!lib.handle) {
-        throw std::runtime_error("Не удалось загрузить библиотеку: " + lib_filename);
+    void* handle = DLOPEN(lib_name.c_str(), RTLD_LAZY);
+    if (!handle) {
+        std::cerr << "Failed to load " << lib_name << std::endl;
+        return p;
     }
-    
-    // Загружаем функции
-    lib.get_info = reinterpret_cast<const algorithm_info_t*(*)()>(
-        DL_SYM(lib.handle, "get_algorithm_info"));
-    lib.get_out_size = reinterpret_cast<size_t(*)(size_t, int)>(
-        DL_SYM(lib.handle, "get_output_size"));
-    lib.encrypt = reinterpret_cast<int(*)(const_buffer_t, const_buffer_t, mut_buffer_t*)>(
-        DL_SYM(lib.handle, "encrypt_data"));
-    lib.decrypt = reinterpret_cast<int(*)(const_buffer_t, const_buffer_t, mut_buffer_t*)>(
-        DL_SYM(lib.handle, "decrypt_data"));
-    lib.free_buf = reinterpret_cast<void(*)(mut_buffer_t*)>(
-        DL_SYM(lib.handle, "free_buffer"));
-    
-    if (!lib.get_info || !lib.get_out_size || !lib.encrypt || !lib.decrypt) {
-        DL_CLOSE(lib.handle);
-        throw std::runtime_error("Библиотека не экспортирует все необходимые функции");
+    p.handle = handle;
+    p.info = (const AlgorithmInfo*)DLSYM(handle, "get_algorithm_info");
+    p.get_output_size = (size_t(*)(size_t, int))DLSYM(handle, "get_output_size");
+    p.encrypt = (int(*)(ConstBuffer, ConstBuffer, MutBuffer*))DLSYM(handle, "encrypt");
+    p.decrypt = (int(*)(ConstBuffer, ConstBuffer, MutBuffer*))DLSYM(handle, "decrypt");
+    p.encrypt_with_iv = (int(*)(ConstBuffer, ConstBuffer, ConstBuffer, MutBuffer*))DLSYM(handle, "encrypt_with_iv");
+    p.free_buffer = (void(*)(uint8_t*))DLSYM(handle, "free_buffer");
+    if (!p.info || !p.get_output_size || !p.encrypt || !p.decrypt) {
+        std::cerr << "Missing symbols in " << lib_name << std::endl;
+        DLCLOSE(handle);
+        return CipherPlugin{};
     }
-    
-    // Кэшируем информацию
-    const algorithm_info_t* info = lib.get_info();
-    if (info) {
-        lib.info = *info;
-    }
-    
-    return lib;
+    return p;
 }
 
-void unload_library(loaded_library_t& lib) {
-    if (lib.handle) {
-        DL_CLOSE(lib.handle);
-        lib.handle = nullptr;
-    }
+void unload_plugin(CipherPlugin& plugin) {
+    if (plugin.handle) DLCLOSE(plugin.handle);
+    plugin = CipherPlugin{};
 }

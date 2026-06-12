@@ -1,0 +1,5 @@
+#!/bin/bash
+sudo cp cryptum /usr/local/bin/
+sudo mkdir -p /usr/local/lib/cryptum
+sudo cp build/lib*.so /usr/local/lib/cryptum/
+echo "Installation complete. Run 'cryptum --help'"

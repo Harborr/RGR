@@ -1,78 +1,43 @@
 #include "file_io.h"
 #include <fstream>
 #include <iostream>
-#include <sys/stat.h>
-
 #ifdef _WIN32
-    #include <io.h>
-    #include <fcntl.h>
+#include <windows.h>
+#include <wincrypt.h>
+#else
+#include <fcntl.h>
+#include <unistd.h>
 #endif
 
-std::vector<uint8_t> read_file(const std::string& filename) {
-    std::ifstream file(filename, std::ios::binary | std::ios::ate);
-    if (!file.is_open()) {
-        throw std::runtime_error("Не удалось открыть файл для чтения: " + filename);
-    }
-    
-    size_t size = file.tellg();
-    file.seekg(0, std::ios::beg);
-    
+std::vector<uint8_t> read_binary_file(const std::string& path) {
+    std::ifstream f(path, std::ios::binary | std::ios::ate);
+    if (!f) return {};
+    size_t size = f.tellg();
+    f.seekg(0, std::ios::beg);
     std::vector<uint8_t> data(size);
-    file.read(reinterpret_cast<char*>(data.data()), size);
-    file.close();
-    
+    f.read(reinterpret_cast<char*>(data.data()), size);
     return data;
 }
 
-void write_file(const std::string& filename, const std::vector<uint8_t>& data) {
-    std::ofstream file(filename, std::ios::binary);
-    if (!file.is_open()) {
-        throw std::runtime_error("Не удалось открыть файл для записи: " + filename);
-    }
-    
-    file.write(reinterpret_cast<const char*>(data.data()), data.size());
-    file.close();
+void write_binary_file(const std::string& path, const std::vector<uint8_t>& data) {
+    std::ofstream f(path, std::ios::binary);
+    if (!f) return;
+    f.write(reinterpret_cast<const char*>(data.data()), data.size());
 }
 
-std::vector<uint8_t> read_stdin() {
-    std::vector<uint8_t> data;
-    uint8_t buffer[4096];
-    
-    // Переключаем stdin в бинарный режим (Windows)
+bool generate_random_bytes(uint8_t* buffer, size_t size) {
 #ifdef _WIN32
-    _setmode(_fileno(stdin), _O_BINARY);
+    HCRYPTPROV prov;
+    if (!CryptAcquireContext(&prov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))
+        return false;
+    bool ok = CryptGenRandom(prov, size, buffer);
+    CryptReleaseContext(prov, 0);
+    return ok;
+#else
+    int fd = open("/dev/urandom", O_RDONLY);
+    if (fd < 0) return false;
+    ssize_t res = read(fd, buffer, size);
+    close(fd);
+    return res == (ssize_t)size;
 #endif
-    
-    while (!std::cin.eof()) {
-        std::cin.read(reinterpret_cast<char*>(buffer), sizeof(buffer));
-        size_t bytes_read = std::cin.gcount();
-        if (bytes_read > 0) {
-            data.insert(data.end(), buffer, buffer + bytes_read);
-        }
-    }
-    
-    return data;
-}
-
-void write_stdout(const std::vector<uint8_t>& data) {
-    // Переключаем stdout в бинарный режим (Windows)
-#ifdef _WIN32
-    _setmode(_fileno(stdout), _O_BINARY);
-#endif
-    
-    std::cout.write(reinterpret_cast<const char*>(data.data()), data.size());
-    std::cout.flush();
-}
-
-bool file_exists(const std::string& filename) {
-    struct stat buffer;
-    return (stat(filename.c_str(), &buffer) == 0);
-}
-
-size_t file_size(const std::string& filename) {
-    struct stat buffer;
-    if (stat(filename.c_str(), &buffer) == 0) {
-        return buffer.st_size;
-    }
-    return 0;
 }
