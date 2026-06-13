@@ -1,0 +1,34 @@
+# Сборка
+build/
+cmake-build-*/
+*.o
+*.obj
+*.exe
+*.out
+ 
+# Исполняемые файлы
+cryptum
+cryptum.exe
+ 
+# Динамические библиотеки
+*.so
+*.dll
+*.dylib
+ 
+# Ключи и временные файлы
+*.key
+*.bin
+*.enc
+*.dec
+*.tmp
+ 
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+ 
+# OS
+.DS_Store
+Thumbs.db
